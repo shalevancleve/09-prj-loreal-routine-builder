@@ -460,3 +460,45 @@ body {
   right: auto;
   left: 16px;
 }
+
+.chat-message {
+        margin: 10px 0;
+        width: 100%;
+        clear: both;
+      }
+      
+.message-bubble {
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 70%;
+  display: inline-block;
+  word-wrap: break-word;
+}
+      
+.message-bubble p {
+  margin: 0;
+}
+      
+.user-bubble {
+  background-color: #ffffffff;
+  color: black;
+  border-top-right-radius: 2px;
+}
+      
+.assistant-bubble {
+  background-color: #000;
+  color: white;
+  border-top-left-radius: 2px;
+  text-align: left;
+}
+      
+.system-bubble {
+  background-color: #f1f1f1;
+  color: #333;
+}
+      
+#chatWindow {
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
+}

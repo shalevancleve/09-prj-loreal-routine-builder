@@ -16,6 +16,9 @@ let selectedProducts = [];
 let allProducts = [];
 let currentCategoryProducts = [];
 
+/* Array to store conversation history */
+let chatHistory = [];
+
 /* Load selected products from localStorage if available */
 function loadSelectedProducts() {
   const saved = localStorage.getItem("selectedProducts");
@@ -180,10 +183,10 @@ function updateSelectedProductsList() {
         (product, idx) => `
         <div class="product-card small" data-id="${product.id}">
           <img src="${product.image}" alt="${product.name}">
-          <div class="product-info">
-            <h3>${product.name}</h3>
-            <p>${product.brand}</p>
-            <button class="remove-btn" data-index="${idx}" title="Remove">&#10005;</button>
+          <div class="product-info" style="position: relative; padding-right: 30px;">
+            <h3 style="margin-right: 25px; overflow: hidden; text-overflow: ellipsis;">${product.name}</h3>
+            <p style="margin-right: 25px; overflow: hidden; text-overflow: ellipsis;">${product.brand}</p>
+            <button class="remove-btn" data-index="${idx}" title="Remove" style="position: absolute; top: 50%; right: 5px; transform: translateY(-50%);">&#10005;</button>
           </div>
         </div>
       `
@@ -200,13 +203,8 @@ function updateSelectedProductsList() {
       saveSelectedProducts();
       updateSelectedProductsList();
       // Re-render products to update selection highlight
-      loadProducts().then((products) =>
-        displayProducts(
-          products.filter(
-            (product) => product.category === categoryFilter.value
-          )
-        )
-      );
+      // Use updateProductDisplay instead of reloading products
+      updateProductDisplay();
     });
   });
 
@@ -218,13 +216,8 @@ function updateSelectedProductsList() {
       saveSelectedProducts();
       updateSelectedProductsList();
       // Re-render products to update selection highlight
-      loadProducts().then((products) =>
-        displayProducts(
-          products.filter(
-            (product) => product.category === categoryFilter.value
-          )
-        )
-      );
+      // Use updateProductDisplay instead of reloading products
+      updateProductDisplay();
     });
   }
 }
@@ -249,26 +242,32 @@ chatForm.addEventListener("submit", async (e) => {
   // Get the user's question from the input field
   const userInput = document.getElementById("userInput").value;
 
-  // Show loading message
-  chatWindow.innerHTML = "Thinking...";
+  if (!userInput.trim()) return; // Don't process empty messages
 
-  // Prepare messages for OpenAI API
-  const messages = [
-    {
+  // Add user message to chat window
+  appendMessageToChat("user", userInput);
+
+  // Show loading indicator
+  appendMessageToChat("system", "Thinking...", true);
+
+  // If this is the first message after generating a routine,
+  // initialize the chat history with system context
+  if (chatHistory.length === 0) {
+    chatHistory.push({
       role: "system",
       content:
         "You are a helpful beauty routine assistant. Answer questions about products and routines. Use the selected products if relevant.",
-    },
-    {
-      role: "user",
-      content: `Here are my selected products:\n${selectedProducts
-        .map((p) => `${p.name} (${p.brand})`)
-        .join(", ")}\n\nMy question: ${userInput}`,
-    },
-  ];
+    });
+  }
+
+  // Add user message to history
+  chatHistory.push({
+    role: "user",
+    content: `${userInput}`,
+  });
 
   try {
-    // Send request to Cloudflare Worker
+    // Send request to Cloudflare Worker with full chat history
     const response = await fetch(
       "https://twilight-cell-bfb8.shalevancleve.workers.dev",
       {
@@ -278,12 +277,15 @@ chatForm.addEventListener("submit", async (e) => {
         },
         body: JSON.stringify({
           model: "gpt-4o",
-          messages: messages,
+          messages: chatHistory,
         }),
       }
     );
 
     const data = await response.json();
+
+    // Remove the loading message
+    removeLoadingMessage();
 
     // Check if we got a response from OpenAI
     if (
@@ -292,30 +294,95 @@ chatForm.addEventListener("submit", async (e) => {
       data.choices[0].message &&
       data.choices[0].message.content
     ) {
-      chatWindow.innerHTML = data.choices[0].message.content;
+      const aiResponse = data.choices[0].message.content;
+      // Add AI response to chat history
+      chatHistory.push({
+        role: "assistant",
+        content: aiResponse,
+      });
+      // Display the AI response
+      appendMessageToChat("assistant", aiResponse);
     } else {
-      chatWindow.innerHTML = "Sorry, something went wrong. Please try again.";
+      appendMessageToChat(
+        "system",
+        "Sorry, something went wrong. Please try again."
+      );
     }
   } catch (error) {
-    chatWindow.innerHTML =
-      "Error connecting to the routine generator. Please try again.";
+    removeLoadingMessage();
+    appendMessageToChat(
+      "system",
+      "Error connecting to the routine generator. Please try again."
+    );
   }
 
   // Clear the input field after sending
   document.getElementById("userInput").value = "";
 });
 
+/* Helper function to append a message to the chat window */
+function appendMessageToChat(role, content, isLoading = false) {
+  const messageDiv = document.createElement("div");
+  messageDiv.className = `chat-message ${role}`;
+  if (isLoading) messageDiv.id = "loading-message";
+
+  // Create a message bubble with appropriate styling based on role
+  const bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "message-bubble";
+
+  // Style the message bubble differently based on the sender
+  if (role === "user") {
+    bubbleDiv.classList.add("user-bubble");
+    bubbleDiv.innerHTML = `<p>${content}</p>`;
+    messageDiv.style.textAlign = "right"; // Align user messages to the right
+  } else if (role === "assistant") {
+    bubbleDiv.classList.add("assistant-bubble");
+    bubbleDiv.innerHTML = `<p>${content}</p>`;
+    messageDiv.style.textAlign = "left"; // Align AI messages to the left
+  } else {
+    // System messages (like loading or error messages)
+    bubbleDiv.classList.add("system-bubble");
+    bubbleDiv.innerHTML = `<p>${content}</p>`;
+    messageDiv.style.textAlign = "center"; // Center system messages
+  }
+
+  // Add the bubble to the message div
+  messageDiv.appendChild(bubbleDiv);
+
+  // Add message to chat window
+  chatWindow.appendChild(messageDiv);
+
+  // Scroll to the bottom of the chat window
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+/* Helper function to remove loading message */
+function removeLoadingMessage() {
+  const loadingMessage = document.getElementById("loading-message");
+  if (loadingMessage) {
+    chatWindow.removeChild(loadingMessage);
+  }
+}
+
 /* When the Generate Routine button is clicked, send selected products to OpenAI API */
 generateRoutineBtn.addEventListener("click", async () => {
   // If no products are selected, show a message and stop
   if (selectedProducts.length === 0) {
     chatWindow.innerHTML =
-      "Please select at least one product to generate a routine.";
+      "<div class='chat-message system'><p>Please select at least one product to generate a routine.</p></div>";
     return;
   }
 
+  // Clear chat history and chat window to start a new conversation
+  chatHistory = [];
+  chatWindow.innerHTML = "";
+
   // Show loading message
-  chatWindow.innerHTML = "Generating your personalized routine...";
+  appendMessageToChat(
+    "system",
+    "Generating your personalized routine...",
+    true
+  );
 
   // Prepare messages for OpenAI API
   const messages = [
@@ -332,6 +399,9 @@ generateRoutineBtn.addEventListener("click", async () => {
     },
   ];
 
+  // Store initial context in chat history
+  chatHistory = [...messages];
+
   try {
     // Send request to Cloudflare Worker
     const response = await fetch(
@@ -350,6 +420,9 @@ generateRoutineBtn.addEventListener("click", async () => {
 
     const data = await response.json();
 
+    // Remove loading message
+    removeLoadingMessage();
+
     // Check if we got a response from OpenAI
     if (
       data.choices &&
@@ -357,13 +430,26 @@ generateRoutineBtn.addEventListener("click", async () => {
       data.choices[0].message &&
       data.choices[0].message.content
     ) {
-      chatWindow.innerHTML = data.choices[0].message.content;
+      const aiResponse = data.choices[0].message.content;
+      // Add response to chat history
+      chatHistory.push({
+        role: "assistant",
+        content: aiResponse,
+      });
+      // Display the response
+      appendMessageToChat("assistant", aiResponse);
     } else {
-      chatWindow.innerHTML = "Sorry, something went wrong. Please try again.";
+      appendMessageToChat(
+        "system",
+        "Sorry, something went wrong. Please try again."
+      );
     }
   } catch (error) {
-    chatWindow.innerHTML =
-      "Error connecting to the routine generator. Please try again.";
+    removeLoadingMessage();
+    appendMessageToChat(
+      "system",
+      "Error connecting to the routine generator. Please try again."
+    );
   }
 });
 
