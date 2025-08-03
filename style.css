@@ -58,6 +58,21 @@ body {
   border-color: #666;
 }
 
+.search-section input#productSearch {
+  padding: 16px;
+  font-size: 18px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background-color: white;
+  font-weight: 500;
+  margin-left: 12px;
+}
+
+.search-section input#productSearch:focus {
+  outline: none;
+  border-color: #666;
+}
+
 /* chat section */
 .chatbox {
   margin: 40px 0;
@@ -252,4 +267,196 @@ body {
 
 .generate-btn i {
   margin-right: 8px;
+}
+
+.product-card.small {
+  flex: 0 1 180px;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  gap: 8px;
+  min-height: 80px;
+  position: relative;
+}
+
+.product-card.small img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.product-card.small .product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 50px;
+  position: relative;
+}
+
+.product-card.small .remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.product-card.small .remove-btn:hover {
+  background: #c0392b;
+}
+
+/* Highlight selected product card */
+.product-card.selected {
+  border: 2px solid #007bff;
+  background: #eaf4ff;
+}
+
+.details-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  font-size: 14px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.details-btn:hover,
+.details-btn:focus {
+  background: #0056b3;
+  outline: none;
+}
+
+.product-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 30, 30, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.product-modal .modal-content {
+  background: #fff;
+  padding: 32px 24px;
+  border-radius: 10px;
+  max-width: 350px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  position: relative;
+  text-align: center;
+}
+
+.product-modal .close-modal {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 28px;
+  color: #333;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.product-modal .close-modal:focus {
+  outline: 2px solid #007bff;
+}
+
+.product-modal .modal-description {
+  margin-top: 18px;
+  font-size: 16px;
+  color: #444;
+}
+
+@media (max-width: 600px) {
+  .product-modal .modal-content {
+    padding: 18px 8px;
+    max-width: 95vw;
+  }
+}
+
+/* RTL support for page wrapper */
+.page-wrapper[dir="rtl"] {
+  direction: rtl;
+}
+
+/* RTL for search section */
+.page-wrapper[dir="rtl"] .search-section {
+  flex-direction: row-reverse;
+}
+.page-wrapper[dir="rtl"] .search-section select,
+.page-wrapper[dir="rtl"] .search-section input#productSearch {
+  text-align: right;
+}
+
+/* RTL for products grid */
+.page-wrapper[dir="rtl"] .products-grid {
+  flex-direction: row-reverse;
+}
+.page-wrapper[dir="rtl"] .product-card {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] .product-card .product-info {
+  align-items: flex-end;
+}
+
+/* RTL for selected products */
+.page-wrapper[dir="rtl"] .selected-products {
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] #selectedProductsList {
+  flex-direction: row-reverse;
+}
+.page-wrapper[dir="rtl"] .product-card.small {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] .product-card.small .product-info {
+  align-items: flex-end;
+}
+.page-wrapper[dir="rtl"] .product-card.small .remove-btn {
+  right: auto;
+  left: 4px;
+}
+
+/* RTL for chatbox */
+.page-wrapper[dir="rtl"] .chatbox {
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] .chat-form {
+  flex-direction: row-reverse;
+}
+.page-wrapper[dir="rtl"] .chat-form input {
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] .chat-window {
+  text-align: right;
+}
+
+/* RTL for modal */
+.page-wrapper[dir="rtl"] .product-modal .modal-content {
+  text-align: right;
+}
+.page-wrapper[dir="rtl"] .product-modal .close-modal {
+  right: auto;
+  left: 16px;
 }

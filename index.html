@@ -17,6 +17,26 @@
 
   <body>
     <div class="page-wrapper">
+      <!-- RTL Toggle Button -->
+      <button
+        id="rtlToggle"
+        style="
+          position: absolute;
+          top: 18px;
+          right: 18px;
+          z-index: 10;
+          padding: 8px 16px;
+          border-radius: 8px;
+          background: #007bff;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          font-size: 15px;
+        "
+      >
+        Switch to RTL
+      </button>
+
       <!------- Header / Branding ------->
       <header class="site-header">
         <img src="img/loreal-logo.png" alt="L'Oréal Logo" class="logo" />
@@ -37,6 +57,13 @@
           <option value="suncare">Suncare</option>
           <option value="fragrance">Fragrance</option>
         </select>
+        <input
+          id="productSearch"
+          type="text"
+          placeholder="Search products…"
+          style="margin-left: 12px; flex: 2"
+          autocomplete="off"
+        />
       </div>
 
       <!-- Products Grid -->

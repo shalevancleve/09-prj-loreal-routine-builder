@@ -3,6 +3,36 @@ const categoryFilter = document.getElementById("categoryFilter");
 const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
+const selectedProductsList = document.getElementById("selectedProductsList");
+const productSearch = document.getElementById("productSearch");
+
+/* Get reference to the Generate Routine button */
+const generateRoutineBtn = document.getElementById("generateRoutine");
+
+/* Array to keep track of selected products */
+let selectedProducts = [];
+
+/* Store last loaded products for filtering */
+let allProducts = [];
+let currentCategoryProducts = [];
+
+/* Load selected products from localStorage if available */
+function loadSelectedProducts() {
+  const saved = localStorage.getItem("selectedProducts");
+  if (saved) {
+    try {
+      selectedProducts = JSON.parse(saved);
+    } catch {
+      selectedProducts = [];
+    }
+  }
+}
+loadSelectedProducts();
+
+/* Save selected products to localStorage */
+function saveSelectedProducts() {
+  localStorage.setItem("selectedProducts", JSON.stringify(selectedProducts));
+}
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -15,43 +45,352 @@ productsContainer.innerHTML = `
 async function loadProducts() {
   const response = await fetch("products.json");
   const data = await response.json();
-  return data.products;
+  allProducts = data.products;
+  return allProducts;
+}
+
+/* Filter products by category and search term */
+function filterProducts(category, searchTerm) {
+  let filtered = allProducts;
+  if (category) {
+    filtered = filtered.filter((product) => product.category === category);
+  }
+  if (searchTerm && searchTerm.trim() !== "") {
+    const term = searchTerm.trim().toLowerCase();
+    filtered = filtered.filter(
+      (product) =>
+        product.name.toLowerCase().includes(term) ||
+        (product.description &&
+          product.description.toLowerCase().includes(term)) ||
+        (product.brand && product.brand.toLowerCase().includes(term))
+    );
+  }
+  return filtered;
+}
+
+/* Display products based on current filters */
+function updateProductDisplay() {
+  const selectedCategory = categoryFilter.value;
+  const searchTerm = productSearch.value;
+  const filteredProducts = filterProducts(selectedCategory, searchTerm);
+  currentCategoryProducts = filteredProducts;
+  displayProducts(filteredProducts);
 }
 
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
+  // Use map to create product cards, add a selected class if chosen
   productsContainer.innerHTML = products
     .map(
       (product) => `
-    <div class="product-card">
+    <div class="product-card${
+      selectedProducts.some((p) => p.id === product.id) ? " selected" : ""
+    }" 
+         data-id="${product.id}">
       <img src="${product.image}" alt="${product.name}">
       <div class="product-info">
         <h3>${product.name}</h3>
         <p>${product.brand}</p>
+        <button class="details-btn" data-id="${product.id}">Details</button>
       </div>
     </div>
   `
     )
     .join("");
+
+  // Add click event listeners to each product card for selection
+  const cards = productsContainer.querySelectorAll(".product-card");
+  cards.forEach((card) => {
+    card.addEventListener("click", (event) => {
+      // Prevent selection if clicking the Details button
+      if (event.target.classList.contains("details-btn")) return;
+      const productId = card.getAttribute("data-id");
+      const product = currentCategoryProducts.find((p) => p.id == productId);
+      const index = selectedProducts.findIndex((p) => p.id == productId);
+      if (index > -1) {
+        selectedProducts.splice(index, 1);
+        card.classList.remove("selected");
+      } else {
+        selectedProducts.push(product);
+        card.classList.add("selected");
+      }
+      saveSelectedProducts();
+      updateSelectedProductsList();
+    });
+  });
+
+  // Add event listeners for Details buttons
+  const detailsBtns = productsContainer.querySelectorAll(".details-btn");
+  detailsBtns.forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevent card selection
+      const productId = btn.getAttribute("data-id");
+      const product = products.find((p) => p.id == productId);
+      showProductModal(product);
+    });
+  });
+}
+
+/* Show product description in a modal */
+function showProductModal(product) {
+  // Create modal HTML
+  const modal = document.createElement("div");
+  modal.className = "product-modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close-modal" tabindex="0" aria-label="Close">&times;</span>
+      <h2>${product.name}</h2>
+      <p><strong>Brand:</strong> ${product.brand}</p>
+      <img src="${product.image}" alt="${
+    product.name
+  }" style="max-width:120px;display:block;margin:10px auto;">
+      <p class="modal-description">${
+        product.description || "No description available."
+      }</p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Focus for accessibility
+  modal.querySelector(".close-modal").focus();
+
+  // Close modal on click or keypress
+  function closeModal() {
+    document.body.removeChild(modal);
+  }
+  modal.querySelector(".close-modal").addEventListener("click", closeModal);
+  modal.querySelector(".close-modal").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") closeModal();
+  });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+}
+
+/* Update the selected products list above the button */
+function updateSelectedProductsList() {
+  // Add a "Clear All" button if there are selected products
+  if (selectedProducts.length === 0) {
+    selectedProductsList.innerHTML = `<div class="placeholder-message">No products selected</div>`;
+    return;
+  }
+  selectedProductsList.innerHTML =
+    selectedProducts
+      .map(
+        (product, idx) => `
+        <div class="product-card small" data-id="${product.id}">
+          <img src="${product.image}" alt="${product.name}">
+          <div class="product-info">
+            <h3>${product.name}</h3>
+            <p>${product.brand}</p>
+            <button class="remove-btn" data-index="${idx}" title="Remove">&#10005;</button>
+          </div>
+        </div>
+      `
+      )
+      .join("") +
+    `<button id="clearAllBtn" class="generate-btn" style="background:#e74c3c;margin-left:10px;width:auto;padding:8px 16px;font-size:16px;">Clear All</button>`;
+
+  // Add event listeners for remove buttons
+  const removeBtns = selectedProductsList.querySelectorAll(".remove-btn");
+  removeBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const idx = parseInt(btn.getAttribute("data-index"));
+      selectedProducts.splice(idx, 1);
+      saveSelectedProducts();
+      updateSelectedProductsList();
+      // Re-render products to update selection highlight
+      loadProducts().then((products) =>
+        displayProducts(
+          products.filter(
+            (product) => product.category === categoryFilter.value
+          )
+        )
+      );
+    });
+  });
+
+  // Add event listener for "Clear All" button
+  const clearAllBtn = document.getElementById("clearAllBtn");
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener("click", () => {
+      selectedProducts = [];
+      saveSelectedProducts();
+      updateSelectedProductsList();
+      // Re-render products to update selection highlight
+      loadProducts().then((products) =>
+        displayProducts(
+          products.filter(
+            (product) => product.category === categoryFilter.value
+          )
+        )
+      );
+    });
+  }
 }
 
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
-  const products = await loadProducts();
-  const selectedCategory = e.target.value;
-
-  /* filter() creates a new array containing only products 
-     where the category matches what the user selected */
-  const filteredProducts = products.filter(
-    (product) => product.category === selectedCategory
-  );
-
-  displayProducts(filteredProducts);
+  if (allProducts.length === 0) {
+    await loadProducts();
+  }
+  updateProductDisplay();
 });
 
-/* Chat form submission handler - placeholder for OpenAI integration */
-chatForm.addEventListener("submit", (e) => {
+/* Real-time search: filter products as user types */
+productSearch.addEventListener("input", () => {
+  updateProductDisplay();
+});
+
+/* Chat form submission handler - sends follow-up questions to OpenAI API */
+chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
+  // Get the user's question from the input field
+  const userInput = document.getElementById("userInput").value;
+
+  // Show loading message
+  chatWindow.innerHTML = "Thinking...";
+
+  // Prepare messages for OpenAI API
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a helpful beauty routine assistant. Answer questions about products and routines. Use the selected products if relevant.",
+    },
+    {
+      role: "user",
+      content: `Here are my selected products:\n${selectedProducts
+        .map((p) => `${p.name} (${p.brand})`)
+        .join(", ")}\n\nMy question: ${userInput}`,
+    },
+  ];
+
+  try {
+    // Send request to Cloudflare Worker
+    const response = await fetch(
+      "https://twilight-cell-bfb8.shalevancleve.workers.dev",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: messages,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    // Check if we got a response from OpenAI
+    if (
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content
+    ) {
+      chatWindow.innerHTML = data.choices[0].message.content;
+    } else {
+      chatWindow.innerHTML = "Sorry, something went wrong. Please try again.";
+    }
+  } catch (error) {
+    chatWindow.innerHTML =
+      "Error connecting to the routine generator. Please try again.";
+  }
+
+  // Clear the input field after sending
+  document.getElementById("userInput").value = "";
+});
+
+/* When the Generate Routine button is clicked, send selected products to OpenAI API */
+generateRoutineBtn.addEventListener("click", async () => {
+  // If no products are selected, show a message and stop
+  if (selectedProducts.length === 0) {
+    chatWindow.innerHTML =
+      "Please select at least one product to generate a routine.";
+    return;
+  }
+
+  // Show loading message
+  chatWindow.innerHTML = "Generating your personalized routine...";
+
+  // Prepare messages for OpenAI API
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a helpful beauty routine assistant. Suggest a routine using the selected products. Be friendly and explain why each product is included.",
+    },
+    {
+      role: "user",
+      content: `Here are my selected products:\n${selectedProducts
+        .map((p) => `${p.name} (${p.brand})`)
+        .join(", ")}`,
+    },
+  ];
+
+  try {
+    // Send request to Cloudflare Worker
+    const response = await fetch(
+      "https://twilight-cell-bfb8.shalevancleve.workers.dev",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: messages,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    // Check if we got a response from OpenAI
+    if (
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content
+    ) {
+      chatWindow.innerHTML = data.choices[0].message.content;
+    } else {
+      chatWindow.innerHTML = "Sorry, something went wrong. Please try again.";
+    }
+  } catch (error) {
+    chatWindow.innerHTML =
+      "Error connecting to the routine generator. Please try again.";
+  }
+});
+
+/* RTL/LTR toggle logic for layout direction */
+const rtlToggle = document.getElementById("rtlToggle");
+const pageWrapper = document.querySelector(".page-wrapper");
+
+// Function to set direction and update button text
+function setDirection(dir) {
+  pageWrapper.setAttribute("dir", dir);
+  rtlToggle.textContent = dir === "rtl" ? "Switch to LTR" : "Switch to RTL";
+  localStorage.setItem("layoutDirection", dir);
+}
+
+// Load direction preference on page load
+document.addEventListener("DOMContentLoaded", async () => {
+  updateSelectedProductsList();
+  await loadProducts();
+  if (categoryFilter.value) {
+    updateProductDisplay();
+  }
+  const savedDir = localStorage.getItem("layoutDirection");
+  setDirection(savedDir === "rtl" ? "rtl" : "ltr");
+});
+
+// Toggle direction on button click
+rtlToggle.addEventListener("click", () => {
+  const currentDir = pageWrapper.getAttribute("dir");
+  setDirection(currentDir === "rtl" ? "ltr" : "rtl");
 });
