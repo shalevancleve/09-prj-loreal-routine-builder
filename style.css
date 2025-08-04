@@ -319,15 +319,15 @@ body {
 
 /* Highlight selected product card */
 .product-card.selected {
-  border: 2px solid #C8B560; /* gold */
-  background: #f8f6e3;       /* light gold background */
+  border: 2px solid #c8b560; /* gold */
+  background: #f8f6e3; /* light gold background */
 }
 
 .details-btn {
   margin-top: 8px;
   padding: 6px 14px;
   font-size: 14px;
-  background: #C8B560; /* gold */
+  background: #c8b560; /* gold */
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -337,7 +337,7 @@ body {
 
 .details-btn:hover,
 .details-btn:focus {
-  background: #A89A3C; /* darker gold */
+  background: #a89a3c; /* darker gold */
   outline: none;
 }
 
@@ -377,7 +377,7 @@ body {
 }
 
 .product-modal .close-modal:focus {
-  outline: 2px solid #C8B560; /* gold */
+  outline: 2px solid #c8b560; /* gold */
 }
 
 .product-modal .modal-description {
@@ -462,11 +462,11 @@ body {
 }
 
 .chat-message {
-        margin: 10px 0;
-        width: 100%;
-        clear: both;
-      }
-      
+  margin: 10px 0;
+  width: 100%;
+  clear: both;
+}
+
 .message-bubble {
   padding: 10px 15px;
   border-radius: 18px;
@@ -474,29 +474,29 @@ body {
   display: inline-block;
   word-wrap: break-word;
 }
-      
+
 .message-bubble p {
   margin: 0;
 }
-      
+
 .user-bubble {
   background-color: #ffffffff;
   color: black;
   border-top-right-radius: 2px;
 }
-      
+
 .assistant-bubble {
   background-color: #000;
   color: white;
   border-top-left-radius: 2px;
   text-align: left;
 }
-      
+
 .system-bubble {
   background-color: #f1f1f1;
   color: #333;
 }
-      
+
 #chatWindow {
   padding: 10px;
   overflow-y: auto;
