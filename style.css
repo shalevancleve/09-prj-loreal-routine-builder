@@ -92,7 +92,7 @@ body {
   line-height: 1.5;
   height: 250px;
   overflow-y: auto;
-  background: #fafafa;
+  background: #e0e0e0;
   margin-bottom: 20px;
 }
 
@@ -319,15 +319,15 @@ body {
 
 /* Highlight selected product card */
 .product-card.selected {
-  border: 2px solid #007bff;
-  background: #eaf4ff;
+  border: 2px solid #C8B560; /* gold */
+  background: #f8f6e3;       /* light gold background */
 }
 
 .details-btn {
   margin-top: 8px;
   padding: 6px 14px;
   font-size: 14px;
-  background: #007bff;
+  background: #C8B560; /* gold */
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -337,7 +337,7 @@ body {
 
 .details-btn:hover,
 .details-btn:focus {
-  background: #0056b3;
+  background: #A89A3C; /* darker gold */
   outline: none;
 }
 
@@ -377,7 +377,7 @@ body {
 }
 
 .product-modal .close-modal:focus {
-  outline: 2px solid #007bff;
+  outline: 2px solid #C8B560; /* gold */
 }
 
 .product-modal .modal-description {
@@ -501,4 +501,18 @@ body {
   padding: 10px;
   overflow-y: auto;
   height: 100%;
+}
+
+#rtlToggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #000000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
 }

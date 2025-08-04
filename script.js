@@ -457,6 +457,18 @@ generateRoutineBtn.addEventListener("click", async () => {
 const rtlToggle = document.getElementById("rtlToggle");
 const pageWrapper = document.querySelector(".page-wrapper");
 
+// List of RTL language codes
+const rtlLanguages = [
+  "ar", // Arabic
+  "he", // Hebrew
+  "fa", // Persian
+  "ur", // Urdu
+  "ps", // Pashto
+  "dv", // Divehi
+  "ku", // Kurdish
+  "yi", // Yiddish
+];
+
 // Function to set direction and update button text
 function setDirection(dir) {
   pageWrapper.setAttribute("dir", dir);
@@ -471,8 +483,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (categoryFilter.value) {
     updateProductDisplay();
   }
+  // Detect browser language and set RTL if needed
   const savedDir = localStorage.getItem("layoutDirection");
-  setDirection(savedDir === "rtl" ? "rtl" : "ltr");
+  if (savedDir) {
+    setDirection(savedDir === "rtl" ? "rtl" : "ltr");
+  } else {
+    // Get browser language (e.g., "ar", "en-US")
+    const userLang = navigator.language || navigator.userLanguage || "";
+    // Check if the language is RTL
+    const langCode = userLang.split("-")[0];
+    if (rtlLanguages.includes(langCode)) {
+      setDirection("rtl");
+    } else {
+      setDirection("ltr");
+    }
+  }
 });
 
 // Toggle direction on button click
